@@ -63,4 +63,31 @@ void BoolTypeNode::unparse(std::ostream& out, int indent){
     out << "bool";
 }
 
+
+void IntLitNode::unparse(std::ostream& out, int indent){
+	doIndent(out, indent);
+	out << myNum;
+}
+
+// Void def
+void VoidTypeNode::unparse(std::ostream& out, int indent){
+    out << "void";
+}
+
+
+void ImmutableTypeNode::unparse(std::ostream& out, int indent){
+	doIndent(out, indent);
+	out << "immutable ";
+	mySub->unparse(out, 0);
+}
+
+
+
+// void RefTypeNode::unparse(std::ostream& out, int indent){
+// 	doIndent(out, indent);
+// 	out << "& ";
+// 	mySub->unparse(out, 0);
+// }
+
+
 } // End namespace a_lang

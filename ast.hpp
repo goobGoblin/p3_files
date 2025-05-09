@@ -142,6 +142,46 @@ public:
 };
 
 
+class IntLitNode : public ExpNode{
+public:
+	IntLitNode(const Position * p, const int numIn)
+	: ExpNode(p), myNum(numIn){ }
+	virtual void unparseNested(std::ostream& out) {
+		unparse(out, 0);
+	}
+	void unparse(std::ostream& out, int indent) override;
+private:
+	const int myNum;
+};
+
+// Void handling
+class VoidTypeNode : public TypeNode{
+public:
+    VoidTypeNode(const Position * p) : TypeNode(p){ }
+    void unparse(std::ostream& out, int indent) override;
+};
+
+
+class ImmutableTypeNode : public TypeNode{
+public:
+	ImmutableTypeNode(const Position * p, TypeNode * inSub)
+	: TypeNode(p), mySub(inSub){}
+	void unparse(std::ostream& out, int indent) override;
+private:
+	TypeNode * mySub;
+};
+
+
+// class RefTypeNode : public TypeNode{
+// public:
+// 	RefTypeNode(const Position * p, TypeNode * inSub)
+// 	: TypeNode(p), mySub(inSub){}
+// 	void unparse(std::ostream& out, int indent) override;
+// private:
+// 	TypeNode * mySub;
+// };
+
+
 } //End namespace a_lang
 
 #endif
