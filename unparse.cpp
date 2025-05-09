@@ -48,6 +48,47 @@ void VarDeclNode::unparse(std::ostream& out, int indent){
 	out << ";\n";
 }
 
+
+// void ClassDefnNode::unparse(std::ostream& out, int indent){
+// 	doIndent(out, indent);
+// 	myID->unparse(out, 0);
+// 	out << " : custom {\n";
+// 	for(auto member : *myMembers){
+// 		member->unparse(out, indent+1);
+// 	}  
+// 	out << "};\n";
+// }
+
+
+
+// void FormalDeclNode::unparse(std::ostream& out, int indent){
+//     doIndent(out, indent); 
+//     ID()->unparse(out, 0);
+//     out << " : ";
+//     getTypeNode()->unparse(out, 0);
+// }
+
+// void FnDeclNode::unparse(std::ostream& out, int indent){
+// 	doIndent(out, indent); 
+// 	myID->unparse(out, 0);
+// 	out << " : ";
+// 	out << "(";
+// 	bool firstFormal = true;
+// 	for(auto formal : *myFormals){
+// 		if (firstFormal) { firstFormal = false; }
+// 		else { out << ", "; }
+// 		formal->unparse(out, 0);
+// 	}
+// 	out << ") -> ";
+// 	myRetType->unparse(out, 0); 
+// 	out << " {\n";
+// 	for(auto stmt : *myBody){
+// 		stmt->unparse(out, indent+1);
+// 	}
+// 	doIndent(out, indent);
+// 	out << "}\n";
+// }
+
 void IDNode::unparse(std::ostream& out, int indent){
 	out << this->name;
 }
@@ -61,6 +102,92 @@ void IntTypeNode::unparse(std::ostream& out, int indent){
 // Bool
 void BoolTypeNode::unparse(std::ostream& out, int indent){
     out << "bool";
+}
+
+
+void CallExpNode::unparse(std::ostream& out, int indent){
+	doIndent(out, indent);
+	myCallee->unparse(out, 0);
+	out << "(";
+	
+	bool firstArg = true;
+	for(auto arg : *myArgs){
+		if (firstArg) { firstArg = false; }
+		else { out << ", "; }
+		arg->unparse(out, 0);
+	}
+	out << ")";
+}
+
+
+void AssignStmtNode::unparse(std::ostream& out, int indent){
+	doIndent(out, indent);
+	myDst->unparse(out, 0);
+	out << " = ";
+	mySrc->unparse(out, 0);
+	out << ";\n";
+}
+
+
+void CallStmtNode::unparse(std::ostream& out, int indent){
+	if (indent != -1){ doIndent(out, indent); }
+	myCallExp->unparse(out, 0);
+	if (indent != -1){ out << ";\n"; }
+}
+
+
+void ReturnStmtNode::unparse(std::ostream& out, int indent){
+	doIndent(out, indent);
+	out << "return";
+	if (myExp != nullptr){
+		out << " ";
+		myExp->unparse(out, 0);
+	}
+	out << ";\n";
+}
+
+void MaybeStmtNode::unparse(std::ostream& out, int indent){
+	if (indent != -1){ doIndent(out, indent); }
+	out << "maybe ";
+	myDst->unparse(out, 0);
+	out << " means ";
+	mySrc1->unparse(out, 0);
+	out << " otherwise ";
+	mySrc2->unparse(out, 0);
+	if (indent != -1){ out << ";\n"; }
+}
+
+void FromConsoleStmtNode::unparse(std::ostream& out, int indent){
+	doIndent(out, indent);
+	out << "fromconsole ";
+	myDst->unparse(out,0);
+	out << ";\n";
+}
+
+
+void ToConsoleStmtNode::unparse(std::ostream& out, int indent){
+	doIndent(out, indent);
+	out << "toconsole ";
+	mySrc->unparse(out,0);
+	out << ";\n";
+}
+
+
+void PostDecStmtNode::unparse(std::ostream& out, int indent){
+	if (indent != -1){ doIndent(out, indent); }
+	this->myLoc->unparse(out,0);
+	out << "--";
+	if (indent != -1){ out << ";\n"; }
+}
+
+
+void PostIncStmtNode::unparse(std::ostream& out, int indent){
+	if (indent != -1){ doIndent(out, indent); }
+	
+	this->myLoc->unparse(out,0);
+	out << "++";
+
+	if (indent != -1){ out << ";\n"; }
 }
 
 

@@ -127,6 +127,49 @@ private:
 	TypeNode * myType;
 };
 
+
+// class ClassDefnNode : public DeclNode{
+// public:
+// 	ClassDefnNode(const Position * p, IDNode * inID, std::list<DeclNode *> * inMembers)
+// 	: DeclNode(p), myID(inID), myMembers(inMembers){ }
+// 	void unparse(std::ostream& out, int indent) override;
+// 	IDNode * ID(){ return myID; }
+// private:
+// 	IDNode * myID;
+// 	std::list<DeclNode *> * myMembers;
+// };
+
+
+// class FormalDeclNode : public VarDeclNode{
+// public:
+//     FormalDeclNode(const Position * p, IDNode * id, TypeNode * type)
+//     : VarDeclNode(p, id, type, nullptr){ }
+//     void unparse(std::ostream& out, int indent) override;
+// };
+
+// class FnDeclNode : public DeclNode{
+// public:
+// 	FnDeclNode(const Position * p,
+// 	  IDNode * inID,
+// 	  std::list<FormalDeclNode *> * inFormals,
+// 	  TypeNode * inRetType,
+// 	  std::list<StmtNode *> * inBody)
+// 	: DeclNode(p), myID(inID),
+// 	  myFormals(inFormals), myRetType(inRetType),
+// 	  myBody(inBody){
+// 	}
+// 	IDNode * ID() const { return myID; }
+// 	std::list<FormalDeclNode *> * getFormals() const{
+// 		return myFormals;
+// 	}
+// 	void unparse(std::ostream& out, int indent) override;
+// private:
+// 	IDNode * myID;
+// 	std::list<FormalDeclNode *> * myFormals;
+// 	TypeNode * myRetType;
+// 	std::list<StmtNode *> * myBody;
+// };
+
 class IntTypeNode : public TypeNode{
 public:
 	IntTypeNode(const Position * p) : TypeNode(p){ }
@@ -139,6 +182,98 @@ class BoolTypeNode : public TypeNode{
 public:
     BoolTypeNode(const Position * p) : TypeNode(p){ }
     void unparse(std::ostream& out, int indent) override;
+};
+
+
+
+class CallExpNode : public ExpNode{
+public:
+	CallExpNode(const Position * p, LocNode * inCallee,
+	  std::list<ExpNode *> * inArgs)
+	: ExpNode(p), myCallee(inCallee), myArgs(inArgs){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	LocNode * myCallee;
+	std::list<ExpNode *> * myArgs;
+};
+
+
+class AssignStmtNode : public StmtNode{
+public:
+	AssignStmtNode(const Position * p, LocNode * inDst, ExpNode * inSrc)
+	: StmtNode(p), myDst(inDst), mySrc(inSrc){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	LocNode * myDst;
+	ExpNode * mySrc;
+};
+
+
+class CallStmtNode : public StmtNode{
+public:
+	CallStmtNode(const Position * p, CallExpNode * expIn)
+	: StmtNode(p), myCallExp(expIn){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	CallExpNode * myCallExp;
+};
+
+
+class ReturnStmtNode : public StmtNode{
+public:
+	ReturnStmtNode(const Position * p, ExpNode * exp)
+	: StmtNode(p), myExp(exp){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	ExpNode * myExp;
+};
+
+
+class MaybeStmtNode : public StmtNode{
+public:
+	MaybeStmtNode(const Position * p, LocNode * inDst, ExpNode * inSrc1, ExpNode * inSrc2)
+	: StmtNode(p), myDst(inDst), mySrc1(inSrc1), mySrc2(inSrc2){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	LocNode * myDst;
+	ExpNode * mySrc1;
+	ExpNode * mySrc2;
+};
+
+class FromConsoleStmtNode : public StmtNode{
+public:
+	FromConsoleStmtNode(const Position * p, LocNode * inDst)
+	: StmtNode(p), myDst(inDst){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	LocNode * myDst;
+};
+
+class ToConsoleStmtNode : public StmtNode{
+public:
+	ToConsoleStmtNode(const Position * p, ExpNode * inSrc)
+	: StmtNode(p), mySrc(inSrc){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	ExpNode * mySrc;
+};
+
+class PostDecStmtNode : public StmtNode{
+public:
+	PostDecStmtNode(const Position * p, LocNode * inLoc)
+	: StmtNode(p), myLoc(inLoc){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	LocNode * myLoc;
+};
+
+class PostIncStmtNode : public StmtNode{
+public:
+	PostIncStmtNode(const Position * p, LocNode * inLoc)
+	: StmtNode(p), myLoc(inLoc){ }
+	void unparse(std::ostream& out, int indent) override;
+private:
+	LocNode * myLoc;
 };
 
 

@@ -122,7 +122,19 @@
 %type <a_lang::TypeNode *> datatype
 %type <a_lang::TypeNode *> primType
 %type <a_lang::LocNode *> loc
+%type <a_lang::ExpNode *> exp
+%type <a_lang::CallExpNode *> callExp
+%type <a_lang::CallStmtNode *> callStmt
 %type <a_lang::IDNode *> name
+%type <a_lang::ExpNode *> term
+%type <a_lang::StmtNode *> stmt
+%type <a_lang::AssignStmtNode *> assignStmt
+%type <a_lang::MaybeStmtNode *> maybeStmt
+%type <a_lang::FromConsoleStmtNode *> fromConsoleStmt
+%type <a_lang::ToConsoleStmtNode *> toConsoleStmt
+%type <a_lang::PostDecStmtNode *> postDecStmt
+%type <a_lang::PostIncStmtNode *> postIncStmt
+%type <a_lang::ReturnStmtNode *> returnStmt
 
 %right ASSIGN
 %left OR
@@ -205,6 +217,7 @@ primType	: INT
 		  }
 		| VOID
 		  {
+      $$ = new VoidTypeNode($1->pos());
 		  }
 
 classTypeDecl 	: name COLON CUSTOM LCURLY classBody RCURLY SEMICOL
@@ -267,33 +280,51 @@ blockStmt	: WHILE LPAREN exp RPAREN LCURLY stmtList RCURLY
 
 stmt		: varDecl
 		  {
+		  $$ = $1;
 		  }
 		| loc ASSIGN exp
 		  {
+		  const auto p = new Position($1->pos(), $3->pos());
+		  $$ = new AssignStmtNode(p, $1, $3); 
 		  }
 		| callExp
 		  {
+		  $$ = new CallStmtNode($1->pos(), $1);
 		  }
 		| loc POSTDEC
 		  {
+		  const Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new PostDecStmtNode(p, $1);
 		  }
 		| loc POSTINC
 		  {
+		  const Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new PostIncStmtNode(p, $1);
 		  }
 		| TOCONSOLE exp
 		  {
+		  const Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new ToConsoleStmtNode(p, $2);
 		  }
 		| FROMCONSOLE loc
 		  {
+		  const Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new FromConsoleStmtNode(p, $2);
 		  }
-		| MAYBE exp MEANS exp OTHERWISE exp
+		| MAYBE loc MEANS exp OTHERWISE exp
 		  {
+		  const Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new MaybeStmtNode(p, $2, $4, $6);
 		  }
 		| RETURN exp
 		  {
+		  const Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new ReturnStmtNode(p, $2);
 		  }
 		| RETURN
 		  {
+		  const Position * p = $1->pos();
+		  $$ = new ReturnStmtNode(p, nullptr);
 		  }
 
 
@@ -362,6 +393,8 @@ term 		: loc
 		  }
 		| INTLITERAL
 		  {
+		  const Position * pos = $1->pos();
+		  $$ = new IntLitNode(pos, $1->num());
 		  }
 		| STRINGLITERAL
 		  {
