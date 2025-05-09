@@ -201,6 +201,7 @@ primType	: INT
 		  }
 		| BOOL
 		  {
+      $$ = new BoolTypeNode($1->pos());
 		  }
 		| VOID
 		  {

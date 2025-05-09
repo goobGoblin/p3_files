@@ -56,4 +56,11 @@ void IntTypeNode::unparse(std::ostream& out, int indent){
 	out << "int";
 }
 
+// New definitions
+
+// Bool
+void BoolTypeNode::unparse(std::ostream& out, int indent){
+    out << "bool";
+}
+
 } // End namespace a_lang

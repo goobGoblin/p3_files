@@ -133,6 +133,15 @@ public:
 	void unparse(std::ostream& out, int indent);
 };
 
+// These are the class declarations I have added
+// Bool handling
+class BoolTypeNode : public TypeNode{
+public:
+    BoolTypeNode(const Position * p) : TypeNode(p){ }
+    void unparse(std::ostream& out, int indent) override;
+};
+
+
 } //End namespace a_lang
 
 #endif
