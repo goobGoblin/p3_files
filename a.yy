@@ -118,6 +118,7 @@
 %type <std::list<a_lang::DeclNode *> *> globals
 %type <a_lang::DeclNode *> decl
 %type <a_lang::VarDeclNode *> varDecl
+%type <a_lang::FnDeclNode *> fnDecl
 %type <a_lang::TypeNode *> type
 %type <a_lang::TypeNode *> datatype
 %type <a_lang::TypeNode *> primType
@@ -125,6 +126,7 @@
 %type <a_lang::ExpNode *> exp
 %type <a_lang::CallExpNode *> callExp
 %type <a_lang::CallStmtNode *> callStmt
+%type <std::list<a_lang::ExpNode *> *> actualsList
 %type <a_lang::IDNode *> name
 %type <a_lang::ExpNode *> term
 %type <a_lang::StmtNode *> stmt
@@ -135,6 +137,13 @@
 %type <a_lang::PostDecStmtNode *> postDecStmt
 %type <a_lang::PostIncStmtNode *> postIncStmt
 %type <a_lang::ReturnStmtNode *> returnStmt
+%type <a_lang::StmtNode *> blockStmt
+%type <std::list<a_lang::StmtNode *> *> stmtList
+%type <a_lang::FormalDeclNode *> formalDecl
+%type <std::list<a_lang::FormalDeclNode *> *> maybeFormals
+%type <std::list<a_lang::FormalDeclNode *> *> formalList
+%type <a_lang::ClassDefnNode *> classTypeDecl
+%type <std::list<a_lang::DeclNode *> *> classBody
 
 %right ASSIGN
 %left OR
@@ -177,12 +186,13 @@ decl		: varDecl SEMICOL
 
 varDecl		: name COLON type
 		  {
-		  const Position * p;
-		  p = new Position($1->pos(), $2->pos());
-		  $$ = new VarDeclNode(p, $1, $3);
+		  Position * p = new Position($1->pos(), $3->pos());
+		  $$ = new VarDeclNode(p,$1, $3, nullptr);
 		  }
 		| name COLON type ASSIGN exp
 		  {
+		  Position * p = new Position($1->pos(), $5->pos());
+		  $$ = new VarDeclNode(p,$1, $3, $5);
 		  }
 
 type		: IMMUTABLE datatype
@@ -195,6 +205,8 @@ type		: IMMUTABLE datatype
 
 datatype	: REF primType
 		  {
+		  Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new RefTypeNode(p, $2);
 		  }
 		| primType
 		  {
@@ -202,9 +214,13 @@ datatype	: REF primType
 		  }
 		| REF name
 		  {
+		  ClassTypeNode * t = new ClassTypeNode($2->pos(), $2);
+		  Position * p = new Position($1->pos(), $2->pos());
+		  $$ = new RefTypeNode(p, t);
 		  }
 		| name
 		  {
+		  $$ = new ClassTypeNode($1->pos(), $1);
 		  }
 
 primType	: INT
@@ -220,62 +236,88 @@ primType	: INT
       $$ = new VoidTypeNode($1->pos());
 		  }
 
-classTypeDecl 	: name COLON CUSTOM LCURLY classBody RCURLY SEMICOL
-		  {
-		  }
+classTypeDecl   : name COLON CUSTOM LCURLY classBody RCURLY SEMICOL
+      {
+      const Position * p = new Position($1->pos(), $7->pos());
+      $$ = new ClassDefnNode(p, $1, $5);
+      }
 
-classBody 	: classBody varDecl SEMICOL
-		  {
-		  //TODO
-		  }
-		| classBody fnDecl
-		  {
-		  //TODO
-		  }
-		| /* epsilon */
-		  {
-		  }
+classBody       : classBody varDecl SEMICOL
+      {
+      $$ = $1;
+      $$->push_back($2);
+      }
+    | classBody fnDecl
+      {
+      $$ = $1;
+      $$->push_back($2);
+      }
+      | /* epsilon */
+      {
+      $$ = new std::list<DeclNode *>();
+      }
 
 fnDecl 		: name COLON LPAREN maybeFormals RPAREN ARROW type LCURLY stmtList RCURLY
 		  {
+		  auto pos = new Position($1->pos(), $10->pos());
+		  $$ = new FnDeclNode(pos, $1, $4, $7, $9);
 		  }
 
 maybeFormals	: /* epsilon */
 		  {
+		  $$ = new std::list<FormalDeclNode *>();
 		  }
 		| formalList
 		  {
+		  $$ = $1;
 		  }
 
 formalList	: formalDecl
 		  {
+		  $$ = new std::list<FormalDeclNode *>();
+		  $$->push_back($1);
 		  }
 		| formalList COMMA formalDecl
 		  {
+		  $$ = $1;
+		  $$->push_back($3);
 		  }
 
 formalDecl	: name COLON type
 		  {
+		  auto pos = new Position($1->pos(), $2->pos());
+		  $$ = new FormalDeclNode(pos, $1, $3);
 		  }
 
 stmtList	: /* epsilon */
 		  {
+		  $$ = new std::list<StmtNode *>();
 		  }
 		| stmtList stmt SEMICOL
 		  {
+		  $$ = $1;
+		  $$->push_back($2);
 		  }
 		| stmtList blockStmt
 		  {
+		  $$ = $1;
+		  $$->push_back($2);
 		  }
 
 blockStmt	: WHILE LPAREN exp RPAREN LCURLY stmtList RCURLY
 		  {
+		  const Position * p = new Position($1->pos(), $7->pos());
+		  $$ = new WhileStmtNode(p, $3, $6);
 		  }
 		| IF LPAREN exp RPAREN LCURLY stmtList RCURLY
 		  {
+		  const Position * p = new Position($1->pos(), $7->pos());
+		  $$ = new IfStmtNode(p, $3, $6);
 		  }
 		| IF LPAREN exp RPAREN LCURLY stmtList RCURLY ELSE LCURLY stmtList RCURLY
 		  {
+		  const Position * p = new Position($1->pos(), $11->pos());
+		  $$ = new IfElseStmtNode(p, $3, $6, $10);
 		  }
 
 stmt		: varDecl
@@ -329,91 +371,121 @@ stmt		: varDecl
 
 
 exp		: exp DASH exp
-		  {
-		  }
-		| exp CROSS exp
-		  {
-		  }
-		| exp STAR exp
-		  {
-		  }
-		| exp SLASH exp
-		  {
-		  }
-		| exp AND exp
-		  {
-		  }
-		| exp OR exp
-		  {
-		  }
-		| exp EQUALS exp
-		  {
-		  }
-		| exp NOTEQUALS exp
-		  {
-		  }
-		| exp GREATER exp
-		  {
-		  }
-		| exp GREATEREQ exp
-		  {
-		  }
-		| exp LESS exp
-		  {
-		  }
-		| exp LESSEQ exp
-		  {
-		  }
-		| NOT exp
-		  {
-		  }
-		| DASH term
-		  {
-		  }
-		| term
-		  {
-		  }
+     {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new MinusNode(p, $1, $3);
+      }
+    | exp CROSS exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new PlusNode(p, $1, $3);
+      }
+    | exp STAR exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new TimesNode(p, $1, $3);
+      }
+    | exp SLASH exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new DivideNode(p, $1, $3);
+      }
+    | exp AND exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new AndNode(p, $1, $3);
+      }
+    | exp OR exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new OrNode(p, $1, $3);
+      }
+    | exp EQUALS exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new EqualsNode(p, $1, $3);
+      }
+    | exp NOTEQUALS exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new NotEqualsNode(p, $1, $3);
+      }
+    | exp GREATER exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new GreaterNode(p, $1, $3);
+      }
+    | exp GREATEREQ exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new GreaterEqNode(p, $1, $3);
+      }
+    | exp LESS exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new LessNode(p, $1, $3);
+      }
+    | exp LESSEQ exp
+        {
+      const Position * p = new Position($1->pos(), $3->pos());
+      $$ = new LessEqNode(p, $1, $3);
+      }
+    | NOT exp
+        {
+      const Position * p = new Position($1->pos(), $2->pos());
+      $$ = new NotNode(p, $2);
+      }
+    | DASH term
+        {
+      const Position * p = new Position($1->pos(), $2->pos());
+      $$ = new NegNode(p, $2);
+      }
+    | term
+        { $$ = $1; }
+
 
 callExp		: loc LPAREN RPAREN
 		  {
+		  const Position * p = new Position($1->pos(), $3->pos());
+		  std::list<ExpNode *> * noargs =
+		    new std::list<ExpNode *>();
+		  $$ = new CallExpNode(p, $1, noargs);
 		  }
-		| loc LPAREN actualList RPAREN
+		| loc LPAREN actualsList RPAREN
 		  {
+		  const Position * p = new Position($1->pos(), $4->pos());
+		  $$ = new CallExpNode(p, $1, $3);
 		  }
 
-actualList	: exp
+actualsList	: exp
 		  {
+		  std::list<ExpNode *> * list =
+		    new std::list<ExpNode *>();
+		  list->push_back($1);
+		  $$ = list;
 		  }
-		| actualList COMMA exp
+		| actualsList COMMA exp
 		  {
+		  $$ = $1;
+		  $$->push_back($3);
 		  }
 
 term 		: loc
-		  {
-		  }
-		| INTLITERAL
-		  {
-		  const Position * pos = $1->pos();
-		  $$ = new IntLitNode(pos, $1->num());
-		  }
-		| STRINGLITERAL
-		  {
-		  }
+		  { $$ = $1; }
+		| INTLITERAL 
+		  { $$ = new IntLitNode($1->pos(), $1->num()); }
+		| STRINGLITERAL 
+		  { $$ = new StrLitNode($1->pos(), $1->str()); }
 		| TRUE
-		  {
-		  }
+		  { $$ = new TrueNode($1->pos()); }
 		| FALSE
-		  {
-		  }
+		  { $$ = new FalseNode($1->pos()); }
 		| EH
-		  {
-		  }
+		  { $$ = new EhNode($1->pos()); }
 		| LPAREN exp RPAREN
-		  {
-		  }
-		| callExp 
-		  {
-		  }
+		  { $$ = $2; }
+		| callExp
+		  { $$ = $1; } 
 
 loc		: name
 		  {
